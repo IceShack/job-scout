@@ -1,13 +1,15 @@
 package store
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/IceShack/job-scout/scraper/internal/model"
 )
 
-func TestHiddenSurvivesMerge(t *testing.T) {
+func TestStatusSurvivesMerge(t *testing.T) {
 	s, err := Open(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -24,8 +26,8 @@ func TestHiddenSurvivesMerge(t *testing.T) {
 		t.Fatalf("SetHidden: found=%v err=%v", found, err)
 	}
 
-	if found, err := s.SetApplied(id, true); !found || err != nil {
-		t.Fatalf("SetApplied: found=%v err=%v", found, err)
+	if found, err := s.SetStatus(id, model.StatusApplied); !found || err != nil {
+		t.Fatalf("SetStatus: found=%v err=%v", found, err)
 	}
 
 	// The same job coming in from the next scrape must keep its flags and
@@ -34,20 +36,62 @@ func TestHiddenSurvivesMerge(t *testing.T) {
 	if err != nil || len(fresh) != 0 {
 		t.Fatalf("re-merge: fresh=%d err=%v", len(fresh), err)
 	}
-	if jobs := s.List(); len(jobs) != 1 || !jobs[0].Hidden || !jobs[0].Applied || jobs[0].AppliedAt.IsZero() {
+	jobs := s.List()
+	if len(jobs) != 1 || !jobs[0].Hidden || jobs[0].Status != model.StatusApplied || jobs[0].StatusAt.IsZero() {
 		t.Fatalf("want 1 hidden+applied job, got %+v", jobs)
 	}
 
-	// Applied jobs survive the 60-day prune.
+	// A reply moves it along, and the timestamp moves with it.
+	if _, err := s.SetStatus(id, model.StatusInterviewing); err != nil {
+		t.Fatal(err)
+	}
+	if got := s.List()[0].Status; got != model.StatusInterviewing {
+		t.Fatalf("status = %q, want interviewing", got)
+	}
+
+	// Tracked jobs survive the 60-day prune.
 	if _, err := s.Merge(nil, now.Add(90*24*time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 	if jobs := s.List(); len(jobs) != 1 {
-		t.Fatalf("applied job was pruned: %+v", jobs)
+		t.Fatalf("tracked job was pruned: %+v", jobs)
+	}
+
+	// Clearing the status takes it back out of the pipeline.
+	if _, err := s.SetStatus(id, model.StatusNone); err != nil {
+		t.Fatal(err)
+	}
+	if j := s.List()[0]; j.Tracked() || !j.StatusAt.IsZero() {
+		t.Fatalf("status not cleared: %+v", j)
 	}
 
 	if found, err := s.SetHidden("nope", true); found || err != nil {
 		t.Fatalf("SetHidden unknown id: found=%v err=%v", found, err)
+	}
+	if found, err := s.SetStatus("nope", model.StatusApplied); found || err != nil {
+		t.Fatalf("SetStatus unknown id: found=%v err=%v", found, err)
+	}
+}
+
+// Stores written before statuses existed carry an "applied" bool.
+func TestLoadMigratesLegacyApplied(t *testing.T) {
+	dir := t.TempDir()
+	legacy := `{"abc":{"id":"abc","source":"test","title":"PHP Dev",
+	  "url":"https://example.com/j/1","score":5,"first_seen":"2026-01-01T00:00:00Z",
+	  "last_seen":"2026-01-02T00:00:00Z","applied":true,"applied_at":"2026-01-03T00:00:00Z"}}`
+	if err := os.WriteFile(filepath.Join(dir, "jobs.json"), []byte(legacy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	j := s.List()[0]
+	if j.Status != model.StatusApplied {
+		t.Fatalf("status = %q, want applied", j.Status)
+	}
+	if got := j.StatusAt.Format(time.RFC3339); got != "2026-01-03T00:00:00Z" {
+		t.Fatalf("status_at = %s, want the old applied_at", got)
 	}
 }
 

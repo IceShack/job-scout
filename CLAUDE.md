@@ -40,6 +40,12 @@ reader can actually read:
 - Job identity: `ID` = source+URL, `ContentKey` = normalized company+title.
   Hidden jobs suppress re-surfacing content-key siblings; keep that
   invariant when touching `store.Merge`.
+- Application statuses live in `model.Statuses`; adding one there is enough
+  for the API, the row control and the filter. `Job.Tracked()` is what
+  exempts an entry from the prune and the startup purge — a job someone
+  applied to must never be deleted by a profile change.
+- `Job.UnmarshalJSON` migrates pre-status stores (`applied` bool). Keep it
+  until every deployment has written a store with `status` in it.
 - The web UI derives its source and fit dropdowns from the stored jobs, so
   it never needs updating when sources or location labels change.
 - `config.example.yaml` is the schema's documentation and is parsed by a

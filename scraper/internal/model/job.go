@@ -3,11 +3,37 @@ package model
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"encoding/json"
 	neturl "net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 )
+
+// Status is how far an application has got. The zero value means the job
+// is only a match so far — nothing has been sent.
+type Status string
+
+const (
+	StatusNone Status = ""
+	// StatusApplied is the initial state once you apply: sent, no reply yet.
+	StatusApplied Status = "applied"
+	// StatusInterviewing is a positive reply — the process is running.
+	StatusInterviewing Status = "interviewing"
+	// StatusDeclined is a negative outcome, from either side.
+	StatusDeclined Status = "declined"
+)
+
+// Statuses lists the statuses in the order an application moves through
+// them. The UI builds its menus from this, so adding one here is enough.
+var Statuses = []Status{StatusApplied, StatusInterviewing, StatusDeclined}
+
+// Valid reports whether s is a known status (StatusNone included: it is
+// how you take a job back out of the pipeline).
+func (s Status) Valid() bool {
+	return s == StatusNone || slices.Contains(Statuses, s)
+}
 
 // Job is a single job ad, normalised across sources.
 type Job struct {
@@ -35,9 +61,31 @@ type Job struct {
 	// Hidden is set when the user marks the job "not interested"; the entry
 	// stays in the store so it never reappears as new.
 	Hidden bool `json:"hidden,omitempty"`
-	// Applied tracks jobs the user has applied to.
-	Applied   bool      `json:"applied,omitempty"`
-	AppliedAt time.Time `json:"applied_at,omitzero"`
+	// Status tracks the application; StatusAt is when it last changed.
+	Status   Status    `json:"status,omitempty"`
+	StatusAt time.Time `json:"status_at,omitzero"`
+}
+
+// Tracked reports whether the job is in the application pipeline. Tracked
+// jobs are an application log: they survive pruning and profile changes.
+func (j *Job) Tracked() bool { return j.Status != StatusNone }
+
+// UnmarshalJSON reads stores written before statuses existed, where the
+// only state was an "applied" bool.
+func (j *Job) UnmarshalJSON(data []byte) error {
+	type job Job // alias, so decoding doesn't recurse into this method
+	legacy := struct {
+		*job
+		Applied   bool      `json:"applied"`
+		AppliedAt time.Time `json:"applied_at"`
+	}{job: (*job)(j)}
+	if err := json.Unmarshal(data, &legacy); err != nil {
+		return err
+	}
+	if j.Status == StatusNone && legacy.Applied {
+		j.Status, j.StatusAt = StatusApplied, legacy.AppliedAt
+	}
+	return nil
 }
 
 // ComputeID derives a stable ID from source and URL.

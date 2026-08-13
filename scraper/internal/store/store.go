@@ -95,8 +95,8 @@ func (s *Store) Merge(found []model.Job, now time.Time) ([]model.Job, error) {
 			// stored entry, or a language-rejection tombstone arriving for
 			// an entry stored before verification existed.
 			j.Hidden = existing.Hidden || j.Hidden
-			j.Applied = existing.Applied
-			j.AppliedAt = existing.AppliedAt
+			j.Status = existing.Status
+			j.StatusAt = existing.StatusAt
 		} else {
 			j.FirstSeen = now
 			if hiddenKeys[j.ContentKey()] {
@@ -112,8 +112,8 @@ func (s *Store) Merge(found []model.Job, now time.Time) ([]model.Job, error) {
 		s.jobs[j.ID] = &j
 	}
 	for id, j := range s.jobs {
-		// Applied entries are an application log — never prune them.
-		if !j.Applied && now.Sub(j.LastSeen) > 60*24*time.Hour {
+		// Tracked entries are an application log — never prune them.
+		if !j.Tracked() && now.Sub(j.LastSeen) > 60*24*time.Hour {
 			delete(s.jobs, id)
 		}
 	}
@@ -176,20 +176,20 @@ func (s *Store) SetHidden(id string, hidden bool) (bool, error) {
 	return true, s.save()
 }
 
-// SetApplied marks a job as applied-to (or reverts it); it reports whether
-// the job exists.
-func (s *Store) SetApplied(id string, applied bool) (bool, error) {
+// SetStatus moves a job along the application pipeline, or takes it back
+// out with model.StatusNone; it reports whether the job exists.
+func (s *Store) SetStatus(id string, status model.Status) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	j, ok := s.jobs[id]
 	if !ok {
 		return false, nil
 	}
-	j.Applied = applied
-	if applied {
-		j.AppliedAt = time.Now()
+	j.Status = status
+	if status == model.StatusNone {
+		j.StatusAt = time.Time{}
 	} else {
-		j.AppliedAt = time.Time{}
+		j.StatusAt = time.Now()
 	}
 	return true, s.save()
 }

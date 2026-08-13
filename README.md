@@ -2,8 +2,8 @@
 
 A job-search scraper you run yourself. It polls a set of job boards every
 few hours, scores each ad against a profile you write, keeps the ones that
-fit where you'd actually work, and serves them as a small web UI with
-"hide" and "applied" state. New matches can be pushed to Telegram.
+fit where you'd actually work, and serves them as a small web UI that
+doubles as an application tracker. New matches can be pushed to Telegram.
 
 One Go binary, one YAML file, a JSON file for state. No database, no
 account, no third party seeing your search.
@@ -59,6 +59,28 @@ pruned, and hidden ads stay hidden even when the same job reappears under a
 different URL. Exclusions are re-applied to stored jobs on every boot, so
 tightening the profile also cleans up what you already collected.
 
+## Tracking applications
+
+Each row carries a status, set from the dropdown in the job table:
+
+| Status | Meaning |
+|---|---|
+| *(none)* | just a match — nothing sent |
+| `applied` | sent, waiting for a reply |
+| `interviewing` | they came back positively |
+| `declined` | negative outcome, from either side |
+
+A job with any status is *tracked*: it is exempt from the 60-day prune and
+from the startup exclusion purge, so your application log survives a
+profile change. The row is tinted by status, and the status dropdown in the
+filter bar narrows the list — `not applied`, `applied — any`, or one
+specific status.
+
+Statuses come from `model.Statuses`; adding one there is enough for the
+API, both dropdowns and the filter to pick it up. Stores written before
+statuses existed are migrated on load: `applied: true` becomes
+`status: applied`.
+
 `scraper/config.example.yaml` documents every option inline.
 
 ## Running it
@@ -70,8 +92,11 @@ make vet
 make docker  # builds ghcr.io/iceshack/job-scout/scraper:latest
 ```
 
-Endpoints: `/` (UI with filters), `/api/jobs` (JSON), `POST /api/run`
-(trigger a scrape), `/health` (open, for probes).
+Endpoints: `/` (UI with filters), `/api/jobs` (JSON, takes the same
+`?source=`/`?fit=`/`?status=`/`?min=`/`?q=`/`?hidden=1` filters),
+`POST /api/jobs/{id}/status?value=applied|interviewing|declined` (empty
+value clears it), `POST /api/jobs/{id}/hide` and `/unhide`,
+`POST /api/run` (trigger a scrape), `/health` (open, for probes).
 
 Environment — all optional, read from `.env` locally (see `.env.example`):
 

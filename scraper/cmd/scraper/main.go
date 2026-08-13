@@ -104,7 +104,7 @@ func main() {
 	if n, err := st.Purge(func(j *model.Job) bool {
 		return a.matcher.CompanyExcluded(j.Company) ||
 			a.matcher.LanguageExcluded(j.Title, j.Description) ||
-			(!j.Applied && a.matcher.FocusExcluded(j))
+			(!j.Tracked() && a.matcher.FocusExcluded(j))
 	}); err != nil {
 		slog.Error("purge excluded jobs", "err", err)
 	} else if n > 0 {
