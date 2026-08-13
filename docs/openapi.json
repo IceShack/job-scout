@@ -1,0 +1,513 @@
+{
+ "components": {
+  "schemas": {
+   "Job": {
+    "properties": {
+     "company": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "first_seen": {
+      "format": "date-time",
+      "type": "string"
+     },
+     "fit": {
+      "type": "string"
+     },
+     "hidden": {
+      "type": "boolean"
+     },
+     "id": {
+      "type": "string"
+     },
+     "last_seen": {
+      "format": "date-time",
+      "type": "string"
+     },
+     "location": {
+      "type": "string"
+     },
+     "posted_at": {
+      "format": "date-time",
+      "type": "string"
+     },
+     "reasons": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "score": {
+      "type": "integer"
+     },
+     "source": {
+      "type": "string"
+     },
+     "status": {
+      "$ref": "#/components/schemas/Status"
+     },
+     "status_at": {
+      "format": "date-time",
+      "type": "string"
+     },
+     "tags": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "title": {
+      "type": "string"
+     },
+     "url": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "source",
+     "title",
+     "company",
+     "location",
+     "url",
+     "score",
+     "fit",
+     "first_seen",
+     "last_seen"
+    ],
+    "type": "object"
+   },
+   "Status": {
+    "description": "How far the application has got; empty means nothing was sent.",
+    "enum": [
+     "",
+     "applied",
+     "interviewing",
+     "declined"
+    ],
+    "type": "string"
+   }
+  },
+  "securitySchemes": {
+   "session": {
+    "description": "Set by POST /login with the shared site password. /health is exempt.",
+    "in": "cookie",
+    "name": "sj_auth",
+    "type": "apiKey"
+   }
+  }
+ },
+ "info": {
+  "description": "Self-hosted job-search scraper: the matched jobs, their application status, and a manual scrape trigger.",
+  "license": {
+   "identifier": "MIT",
+   "name": "MIT"
+  },
+  "title": "job-scout API",
+  "version": "1.0.0"
+ },
+ "openapi": "3.1.0",
+ "paths": {
+  "/": {
+   "get": {
+    "operationId": "index",
+    "parameters": [
+     {
+      "description": "Free-text search over title, company and description.",
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "Keep only jobs from this source.",
+      "in": "query",
+      "name": "source",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "Keep only jobs whose fit starts with this label.",
+      "in": "query",
+      "name": "fit",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "Application status: a status name, \"none\" for untouched jobs, \"tracked\" for anything applied to.",
+      "in": "query",
+      "name": "status",
+      "required": false,
+      "schema": {
+       "enum": [
+        "",
+        "none",
+        "tracked",
+        "applied",
+        "interviewing",
+        "declined"
+       ],
+       "type": "string"
+      }
+     },
+     {
+      "description": "Minimum score.",
+      "in": "query",
+      "name": "min",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "description": "Set to 1 to list the hidden (\"not interested\") jobs instead.",
+      "in": "query",
+      "name": "hidden",
+      "required": false,
+      "schema": {
+       "enum": [
+        "",
+        "1"
+       ],
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "text/html": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "The job table."
+     }
+    },
+    "summary": "Job list, as HTML"
+   }
+  },
+  "/api/jobs": {
+   "get": {
+    "description": "Matched jobs, highest score first, then most recently seen.",
+    "operationId": "listJobs",
+    "parameters": [
+     {
+      "description": "Free-text search over title, company and description.",
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "Keep only jobs from this source.",
+      "in": "query",
+      "name": "source",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "Keep only jobs whose fit starts with this label.",
+      "in": "query",
+      "name": "fit",
+      "required": false,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "Application status: a status name, \"none\" for untouched jobs, \"tracked\" for anything applied to.",
+      "in": "query",
+      "name": "status",
+      "required": false,
+      "schema": {
+       "enum": [
+        "",
+        "none",
+        "tracked",
+        "applied",
+        "interviewing",
+        "declined"
+       ],
+       "type": "string"
+      }
+     },
+     {
+      "description": "Minimum score.",
+      "in": "query",
+      "name": "min",
+      "required": false,
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "description": "Set to 1 to list the hidden (\"not interested\") jobs instead.",
+      "in": "query",
+      "name": "hidden",
+      "required": false,
+      "schema": {
+       "enum": [
+        "",
+        "1"
+       ],
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Job"
+         },
+         "type": "array"
+        }
+       }
+      },
+      "description": "The matching jobs."
+     }
+    },
+    "summary": "Job list, as JSON"
+   }
+  },
+  "/api/jobs/{id}/hide": {
+   "post": {
+    "description": "The entry stays stored so the ad never resurfaces as new, including under a sibling URL.",
+    "operationId": "hideJob",
+    "parameters": [
+     {
+      "description": "Job ID, as returned by /api/jobs.",
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Job hidden."
+     },
+     "404": {
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "No job with that ID."
+     }
+    },
+    "summary": "Mark a job \"not interested\""
+   }
+  },
+  "/api/jobs/{id}/status": {
+   "post": {
+    "description": "An empty value takes the job back out of the pipeline.",
+    "operationId": "setJobStatus",
+    "parameters": [
+     {
+      "description": "Job ID, as returned by /api/jobs.",
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "description": "The new status.",
+      "in": "query",
+      "name": "value",
+      "required": true,
+      "schema": {
+       "enum": [
+        "",
+        "applied",
+        "interviewing",
+        "declined"
+       ],
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Status updated."
+     },
+     "400": {
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Unknown status value."
+     },
+     "404": {
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "No job with that ID."
+     }
+    },
+    "summary": "Set a job's application status"
+   }
+  },
+  "/api/jobs/{id}/unhide": {
+   "post": {
+    "operationId": "unhideJob",
+    "parameters": [
+     {
+      "description": "Job ID, as returned by /api/jobs.",
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Job restored."
+     },
+     "404": {
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "No job with that ID."
+     }
+    },
+    "summary": "Restore a hidden job"
+   }
+  },
+  "/api/run": {
+   "post": {
+    "description": "Returns immediately; the run happens in the background and is skipped if one is already going.",
+    "operationId": "triggerScrape",
+    "responses": {
+     "202": {
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "Scrape triggered."
+     }
+    },
+    "summary": "Trigger a scrape"
+   }
+  },
+  "/health": {
+   "get": {
+    "description": "Always reachable, even when a password is configured.",
+    "operationId": "health",
+    "responses": {
+     "200": {
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "description": "The service is up."
+     }
+    },
+    "summary": "Liveness probe"
+   }
+  },
+  "/login": {
+   "post": {
+    "operationId": "login",
+    "requestBody": {
+     "content": {
+      "application/x-www-form-urlencoded": {
+       "schema": {
+        "properties": {
+         "password": {
+          "type": "string"
+         }
+        },
+        "required": [
+         "password"
+        ],
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "303": {
+      "description": "Signed in; the session cookie is set."
+     },
+     "401": {
+      "description": "Wrong password."
+     }
+    },
+    "security": [],
+    "summary": "Exchange the site password for a session cookie"
+   }
+  },
+  "/openapi.json": {
+   "get": {
+    "operationId": "openapi",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object"
+        }
+       }
+      },
+      "description": "The OpenAPI 3.1 document."
+     }
+    },
+    "summary": "This OpenAPI document"
+   }
+  }
+ },
+ "security": [
+  {
+   "session": []
+  }
+ ],
+ "servers": [
+  {
+   "description": "This instance.",
+   "url": "/"
+  }
+ ]
+}

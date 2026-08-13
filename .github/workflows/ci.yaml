@@ -38,6 +38,14 @@ jobs:
       - name: Test
         run: go test ./...
 
+      # The document is generated from the route table; a stale checked-in
+      # copy means someone changed the API without regenerating it.
+      - name: OpenAPI document is current
+        run: |
+          go run ./cmd/scraper -openapi > ../docs/openapi.json
+          git diff --exit-code ../docs/openapi.json \
+            || { echo "::error::docs/openapi.json is stale — run 'make openapi'"; exit 1; }
+
       - name: Log in to GHCR
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: docker/login-action@v3

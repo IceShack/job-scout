@@ -96,7 +96,27 @@ Endpoints: `/` (UI with filters), `/api/jobs` (JSON, takes the same
 `?source=`/`?fit=`/`?status=`/`?min=`/`?q=`/`?hidden=1` filters),
 `POST /api/jobs/{id}/status?value=applied|interviewing|declined` (empty
 value clears it), `POST /api/jobs/{id}/hide` and `/unhide`,
-`POST /api/run` (trigger a scrape), `/health` (open, for probes).
+`POST /api/run` (trigger a scrape), `/health` (open, for probes),
+`/openapi.json` (see below).
+
+### API documentation
+
+The server describes itself: `GET /openapi.json` returns an OpenAPI 3.1
+document, and [`docs/openapi.json`](docs/openapi.json) is the same thing
+checked in for reading on GitHub. Point Swagger UI, Redoc or a client
+generator at either.
+
+It is generated, not written: `internal/web/openapi.go` holds one route
+table that both registers the handlers and describes them, and the `Job`
+and `Status` schemas are reflected off the Go structs the server actually
+marshals. Tests assert every served route is documented, that the status
+codes in the document are the ones the handlers return, and that the `Job`
+schema covers every struct field. CI fails if the checked-in copy is stale.
+
+```sh
+make openapi                       # regenerate docs/openapi.json
+go run ./cmd/scraper -openapi      # or dump it to stdout, no config needed
+```
 
 Environment — all optional, read from `.env` locally (see `.env.example`):
 

@@ -59,22 +59,13 @@ func New(opts Options) *Server {
 	return s
 }
 
+// Handler registers every route from the table in openapi.go, which is
+// also what the OpenAPI document is generated from.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	})
-	mux.HandleFunc("GET /api/jobs", s.handleJobs)
-	mux.HandleFunc("POST /api/jobs/{id}/hide", s.setFlag(s.store.SetHidden, true))
-	mux.HandleFunc("POST /api/jobs/{id}/unhide", s.setFlag(s.store.SetHidden, false))
-	mux.HandleFunc("POST /api/jobs/{id}/status", s.handleStatus)
-	mux.HandleFunc("POST /api/run", func(w http.ResponseWriter, _ *http.Request) {
-		s.trigger()
-		w.WriteHeader(http.StatusAccepted)
-		_, _ = w.Write([]byte("scrape triggered"))
-	})
-	mux.HandleFunc("GET /{$}", s.handleIndex)
+	for _, rt := range s.routes() {
+		mux.HandleFunc(rt.Method+" "+rt.Path, rt.Handler)
+	}
 	if s.password == "" {
 		return mux
 	}

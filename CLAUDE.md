@@ -50,5 +50,12 @@ reader can actually read:
   it never needs updating when sources or location labels change.
 - `config.example.yaml` is the schema's documentation and is parsed by a
   test — keep it current when adding an option.
+- HTTP routes go in the `routes()` table in `internal/web/openapi.go`, never
+  straight onto the mux: that table is what generates the OpenAPI document,
+  and a handler registered outside it would be undocumented and untested.
+  Run `make openapi` after changing it — CI fails on a stale
+  `docs/openapi.json`.
+- Response schemas are reflected off the Go structs, so documenting a new
+  field means giving it a json tag, nothing more.
 - Changing an existing source's URL format needs no purge rule here;
   deployments handle their own state. Exclusions are re-applied on boot.

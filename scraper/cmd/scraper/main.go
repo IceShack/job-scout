@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
 	"log/slog"
 	"net/http"
 	"os"
@@ -61,6 +63,20 @@ type app struct {
 }
 
 func main() {
+	// Dumping the spec must work without a config file, so it happens
+	// before anything else is loaded.
+	dumpSpec := flag.Bool("openapi", false, "write the OpenAPI document to stdout and exit")
+	flag.Parse()
+	if *dumpSpec {
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", " ")
+		if err := enc.Encode(web.New(web.Options{Password: "documented"}).Spec()); err != nil {
+			slog.Error("write openapi", "err", err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	loadDotEnv()
 	cfgPath := env("CONFIG_PATH", "config.yaml")
 	cfg, err := config.Load(cfgPath)
