@@ -126,7 +126,7 @@ follows it: the startup log, the heading in the web UI, `info.version` in
 the OpenAPI document, and the published image tag.
 
 ```sh
-go run ./cmd/scraper -version      # 1.0.0
+go run ./cmd/scraper -version      # 1.1.0
 ```
 
 To cut a release, bump `version.Version`, commit, then tag the commit
