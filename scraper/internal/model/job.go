@@ -24,9 +24,9 @@ type Job struct {
 	// Set by the matcher.
 	Score   int      `json:"score"`
 	Reasons []string `json:"reasons,omitempty"`
-	// Fit explains why the job matches the search profile:
-	// "bulgaria" (on-site/hybrid employee option) or "eu-remote"
-	// (remote, workable from the EU as a contractor).
+	// Fit explains how the job's geography matches: the configured
+	// location.local_label or remote_label, followed by the marker that
+	// decided it — e.g. "germany (berlin)", "eu-remote (unverified)".
 	Fit string `json:"fit"`
 
 	// Set by the store.
