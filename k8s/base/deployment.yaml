@@ -1,0 +1,102 @@
+# Single replica with strategy Recreate: the scraper keeps its state on a
+# RWO volume and runs its own scheduler, so two replicas must never overlap.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scraper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scraper
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: scraper
+    spec:
+      # The image runs as user 10001; fsGroup makes the PVC writable for it.
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: scraper
+          image: ghcr.io/iceshack/job-scout/scraper:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CONFIG_PATH
+              value: /etc/scraper/config.yaml
+            - name: STATE_DIR
+              value: /data
+            - name: PORT
+              value: "8080"
+            # Every secret below is optional: without it the matching
+            # feature simply stays off.
+            #
+            # New matches are pushed to Telegram when both of these are set.
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: scraper-secret
+                  key: TELEGRAM_BOT_TOKEN
+                  optional: true
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: scraper-secret
+                  key: TELEGRAM_CHAT_ID
+                  optional: true
+            # Single shared password for the web UI; /health stays open for
+            # the readiness probe. Unset means no authentication at all.
+            - name: SITE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: scraper-secret
+                  key: SITE_PASSWORD
+                  optional: true
+            # Web-search discovery (Serper) and page crawling (Firecrawl).
+            - name: SERPER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: scraper-secret
+                  key: SERPER_API_KEY
+                  optional: true
+            - name: FIRECRAWL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: scraper-secret
+                  key: FIRECRAWL_API_KEY
+                  optional: true
+          volumeMounts:
+            - name: config
+              mountPath: /etc/scraper
+              readOnly: true
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        # Supplied by your overlay; see k8s/example-overlay.
+        - name: config
+          configMap:
+            name: scraper-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: scraper-data

@@ -1,0 +1,190 @@
+# job-scout — copy this to config.yaml and make it yours.
+#
+# The example below describes a senior Go/TypeScript backend developer
+# based in Berlin, looking for remote work across Europe. Two blocks decide
+# everything: `profile` (what you're looking for) and `location` (where
+# you'd work). `sources` says which boards to read and what to ask them.
+
+app:
+  title: job-scout
+
+# How often to scrape, and the score a job needs to be kept.
+scrape_interval: 6h
+min_score: 4
+
+profile:
+  # At least one of these must appear somewhere in the ad. This is the
+  # single strongest filter — keep it to the stack you actually want.
+  require_any:
+    - golang
+    - typescript
+    - node.js
+  # Title-only variant, used to redeem an adjacent_titles match. Short
+  # words like "go" belong here rather than in require_any, where they
+  # would match half of every description.
+  core_title_terms:
+    - go
+    - golang
+    - typescript
+    - node
+  # Neighbouring roles: dropped unless a core term is in the title too, so
+  # "Python Developer" goes and "Go/Python Developer" stays.
+  adjacent_titles:
+    - python
+    - php
+
+  # Weighted terms, matched against title, tags and description.
+  keywords:
+    - { term: golang, weight: 4 }
+    - { term: typescript, weight: 3 }
+    - { term: node.js, weight: 2 }
+    - { term: kubernetes, weight: 2 }
+    - { term: grpc, weight: 1 }
+    - { term: postgres, weight: 1 }
+    - { term: aws, weight: 1 }
+    - { term: react, weight: 1 }
+    - { term: backend, weight: 1 }
+    - { term: full-stack, weight: 1 }
+
+  # Extra weight per term found in the job title.
+  title_boost: [go, golang, typescript, backend]
+  title_boost_weight: 2
+
+  # Drop the job when a term appears in the title.
+  exclude:
+    - junior
+    - intern
+    - internship
+    - werkstudent
+    - designer
+    - devops
+    - sre
+    - marketing
+    - sales
+    - recruiter
+    - customer support
+
+  # Drop jobs from these companies (case-insensitive substring match) —
+  # places already applied to or ruled out.
+  exclude_companies: []
+
+  # Ad languages worth reading, as two-letter codes. Supported: bg, da, de,
+  # en, es, fi, fr, it, nl, pl, pt, ru, sv, uk. Leave empty to keep every
+  # language.
+  languages: [en, de]
+
+  # Extra weight when any of these terms appears anywhere in the ad.
+  bonus_terms:
+    - terms: [contract, freelance, b2b, contractor]
+      weight: 1
+      reason: contract-friendly
+
+# Geography. Markers are plain substrings matched against the ad's
+# location, title and description; local wins over region, and a reject
+# marker only bites when no positive marker matched. Leave all three lists
+# empty to accept jobs from anywhere.
+location:
+  local_label: germany
+  remote_label: eu-remote
+  # Ads from remote boards that state no geography at all are kept, marked
+  # "eu-remote (unverified)". Set false to drop them instead.
+  keep_unverified: true
+  local_markers: [germany, deutschland, berlin, münchen, munich, hamburg, köln]
+  region_markers:
+    - worldwide
+    - anywhere
+    - global
+    - europe
+    - european
+    - emea
+    - eu only
+    - eu-only
+    - eu timezone
+    - eu time
+    - cet
+    - utc
+  reject_markers:
+    - usa only
+    - us only
+    - us-only
+    - united states
+    - usa
+    - u.s.
+    - north america
+    - canada
+    - latam
+    - americas
+    - apac
+    - australia
+    - uk only
+    - us timezones
+    - us time
+    - india
+    - philippines
+    - singapore
+    - brazil
+    - argentina
+    - mexico
+
+# Boards to read. A source left out is enabled with its defaults; set
+# `enabled: false` to turn one off. Sources that take listing URLs are
+# skipped when none are configured — that is where your stack goes.
+sources:
+  remoteok: true
+
+  remotive:
+    enabled: true
+    categories: [software-dev]
+
+  weworkremotely:
+    enabled: true
+    feeds:
+      - https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss
+      - https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss
+
+  hackernews:
+    enabled: true
+    # Keep only posts from the monthly "Who is hiring?" thread that contain
+    # this text; empty keeps all of them.
+    require: remote
+
+  arcdev:
+    enabled: true
+    pages:
+      - https://arc.dev/remote-jobs/golang
+      - https://arc.dev/remote-jobs/typescript
+
+  justjoin:
+    enabled: true
+    pages:
+      - https://justjoin.it/job-offers/all-locations/go?workplace=remote
+      - https://justjoin.it/job-offers/all-locations/javascript?workplace=remote
+    # Listing cards carry no ad text, so offer pages are fetched to check
+    # the language. This caps those fetches per run.
+    verify_limit: 25
+
+  # Bulgarian boards — enable them if you are searching in Bulgaria.
+  devbg:
+    enabled: false
+    pages:
+      - https://dev.bg/company/jobs/go/
+  jobsbg:
+    # Behind Cloudflare, so this one needs FIRECRAWL_API_KEY.
+    enabled: false
+    pages:
+      - https://www.jobs.bg/front_job_search.php?frombutton=1&keywords%5B%5D=golang
+
+  # Web search finds ads beyond the fixed boards. Needs SERPER_API_KEY;
+  # with FIRECRAWL_API_KEY set as well, hits are fetched in full so the
+  # matcher scores the whole page instead of a search snippet. Without the
+  # keys this source simply stays off.
+  serper:
+    enabled: true
+    # Firecrawl pages per run — this is the credit budget.
+    max_pages_per_run: 10
+    queries:
+      - senior golang developer remote europe
+      - typescript backend developer contract remote europe
+    # Domains covered by the enabled boards above are skipped
+    # automatically; list any extras here.
+    skip_domains: []

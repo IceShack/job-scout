@@ -1,0 +1,81 @@
+package model
+
+import (
+	"crypto/sha1"
+	"encoding/hex"
+	neturl "net/url"
+	"regexp"
+	"strings"
+	"time"
+)
+
+// Job is a single job ad, normalised across sources.
+type Job struct {
+	ID          string    `json:"id"`
+	Source      string    `json:"source"`
+	Title       string    `json:"title"`
+	Company     string    `json:"company"`
+	Location    string    `json:"location"`
+	URL         string    `json:"url"`
+	Tags        []string  `json:"tags,omitempty"`
+	Description string    `json:"description,omitempty"`
+	PostedAt    time.Time `json:"posted_at,omitzero"`
+
+	// Set by the matcher.
+	Score   int      `json:"score"`
+	Reasons []string `json:"reasons,omitempty"`
+	// Fit explains why the job matches the search profile:
+	// "bulgaria" (on-site/hybrid employee option) or "eu-remote"
+	// (remote, workable from the EU as a contractor).
+	Fit string `json:"fit"`
+
+	// Set by the store.
+	FirstSeen time.Time `json:"first_seen"`
+	LastSeen  time.Time `json:"last_seen"`
+	// Hidden is set when the user marks the job "not interested"; the entry
+	// stays in the store so it never reappears as new.
+	Hidden bool `json:"hidden,omitempty"`
+	// Applied tracks jobs the user has applied to.
+	Applied   bool      `json:"applied,omitempty"`
+	AppliedAt time.Time `json:"applied_at,omitzero"`
+}
+
+// ComputeID derives a stable ID from source and URL.
+func (j *Job) ComputeID() string {
+	h := sha1.Sum([]byte(j.Source + "|" + j.URL))
+	return hex.EncodeToString(h[:8])
+}
+
+var nonAlnum = regexp.MustCompile(`[^a-z0-9]+`)
+
+// ContentKey identifies the same ad independent of its URL — boards like
+// justjoin.it publish one URL per city for a single offer, so a hidden job
+// must stay hidden when it resurfaces under a sibling URL.
+func (j *Job) ContentKey() string {
+	norm := func(s string) string {
+		return strings.TrimSpace(nonAlnum.ReplaceAllString(strings.ToLower(s), " "))
+	}
+	h := sha1.Sum([]byte(norm(j.Company) + "|" + norm(j.Title)))
+	return hex.EncodeToString(h[:8])
+}
+
+// Tracking query parameters that vary between fetches of the same page;
+// they would give the same ad a fresh ID every scrape.
+var trackingParam = regexp.MustCompile(`^(utm_|srsltid$|gclid$|fbclid$|mc_|_hs|ref$)`)
+
+// NormalizeURL strips tracking parameters and fragments.
+func NormalizeURL(raw string) string {
+	u, err := neturl.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	q := u.Query()
+	for key := range q {
+		if trackingParam.MatchString(strings.ToLower(key)) {
+			q.Del(key)
+		}
+	}
+	u.RawQuery = q.Encode()
+	u.Fragment = ""
+	return u.String()
+}

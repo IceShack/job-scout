@@ -1,0 +1,26 @@
+# Copy this directory, then change four things: the namespace, the host in
+# ingress.yaml, the image tag, and config.yaml.
+#
+#   kubectl apply -k k8s/example-overlay
+#
+# config.yaml is generated into the ConfigMap the Deployment mounts. Its
+# name carries a content hash, so editing the profile rolls the pod — the
+# scraper reads its config once, at startup.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: job-scout
+
+resources:
+  - ../base
+  - namespace.yaml
+  - ingress.yaml
+
+configMapGenerator:
+  - name: scraper-config
+    files:
+      - config.yaml
+
+images:
+  - name: ghcr.io/iceshack/job-scout/scraper
+    newTag: latest

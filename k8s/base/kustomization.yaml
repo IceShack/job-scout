@@ -1,0 +1,16 @@
+# Portable workload: PVC, Service, Deployment. Ingress and the config
+# ConfigMap are cluster-specific, so they live in your overlay — see
+# k8s/example-overlay.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: job-scout
+
+resources:
+  - pvc.yaml
+  - service.yaml
+  - deployment.yaml
+
+images:
+  - name: ghcr.io/iceshack/job-scout/scraper
+    newTag: latest

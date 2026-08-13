@@ -1,0 +1,53 @@
+# The deployed search profile. This is the same file as
+# scraper/config.example.yaml — see there for every option with comments.
+app:
+  title: job-scout
+
+scrape_interval: 6h
+min_score: 4
+
+profile:
+  require_any: [golang, typescript]
+  core_title_terms: [go, golang, typescript]
+  adjacent_titles: [python, php]
+  keywords:
+    - { term: golang, weight: 4 }
+    - { term: typescript, weight: 3 }
+    - { term: kubernetes, weight: 2 }
+    - { term: backend, weight: 1 }
+  title_boost: [go, golang, typescript, backend]
+  exclude: [junior, intern, designer, devops, sre, recruiter]
+  languages: [en, de]
+  bonus_terms:
+    - terms: [contract, freelance, b2b]
+      weight: 1
+      reason: contract-friendly
+
+location:
+  local_label: germany
+  remote_label: eu-remote
+  local_markers: [germany, deutschland, berlin]
+  region_markers: [worldwide, anywhere, europe, european, emea, cet, utc]
+  reject_markers: [us only, united states, north america, latam, apac, india]
+
+sources:
+  remoteok: true
+  remotive:
+    categories: [software-dev]
+  weworkremotely:
+    feeds:
+      - https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss
+  hackernews:
+    require: remote
+  arcdev:
+    pages:
+      - https://arc.dev/remote-jobs/golang
+  justjoin:
+    pages:
+      - https://justjoin.it/job-offers/all-locations/go?workplace=remote
+  devbg: false
+  jobsbg: false
+  serper:
+    max_pages_per_run: 10
+    queries:
+      - senior golang developer remote europe

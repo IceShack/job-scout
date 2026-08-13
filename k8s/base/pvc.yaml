@@ -1,0 +1,11 @@
+# Matched jobs and the crawl cache live here; a few hundred KB in practice.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scraper-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

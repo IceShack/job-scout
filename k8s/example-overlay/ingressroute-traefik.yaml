@@ -1,0 +1,18 @@
+# Traefik alternative to ingress.yaml. To use it, swap the two filenames
+# in kustomization.yaml's resources list and set your own host and TLS
+# certificate resolver.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: scraper
+spec:
+  entryPoints:
+    - websecure
+  tls:
+    certResolver: le
+  routes:
+    - match: Host(`jobs.example.com`)
+      kind: Rule
+      services:
+        - name: scraper
+          port: 8080
