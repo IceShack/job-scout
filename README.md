@@ -118,6 +118,22 @@ make openapi                       # regenerate docs/openapi.json
 go run ./cmd/scraper -openapi      # or dump it to stdout, no config needed
 ```
 
+## Versions and releases
+
+`scraper/internal/version` holds the release number, and everything else
+follows it: the startup log, the heading in the web UI, `info.version` in
+the OpenAPI document, and the published image tag.
+
+```sh
+go run ./cmd/scraper -version      # 1.0.0
+```
+
+To cut a release, bump `version.Version`, commit, then tag the commit
+`vX.Y.Z`. CI refuses a tag that disagrees with the constant, and on a tag
+it publishes `ghcr.io/OWNER/job-scout/scraper:X.Y.Z` alongside `:latest`
+and the commit SHA. Deployments should pin the version tag rather than
+`:latest` if you want to choose when to move.
+
 Environment — all optional, read from `.env` locally (see `.env.example`):
 
 | Variable | Effect |

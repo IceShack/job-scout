@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/IceShack/job-scout/scraper/internal/notify"
 	"github.com/IceShack/job-scout/scraper/internal/source"
 	"github.com/IceShack/job-scout/scraper/internal/store"
+	"github.com/IceShack/job-scout/scraper/internal/version"
 	"github.com/IceShack/job-scout/scraper/internal/web"
 )
 
@@ -63,10 +65,15 @@ type app struct {
 }
 
 func main() {
-	// Dumping the spec must work without a config file, so it happens
-	// before anything else is loaded.
+	// These must work without a config file, so they come before anything
+	// else is loaded.
 	dumpSpec := flag.Bool("openapi", false, "write the OpenAPI document to stdout and exit")
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println(version.Version)
+		return
+	}
 	if *dumpSpec {
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", " ")
@@ -111,7 +118,8 @@ func main() {
 	for _, s := range a.sources {
 		names = append(names, s.Name())
 	}
-	slog.Info("starting", "interval", time.Duration(cfg.ScrapeInterval).String(),
+	slog.Info("starting", "version", version.Version,
+		"interval", time.Duration(cfg.ScrapeInterval).String(),
 		"min_score", cfg.MinScore, "sources", strings.Join(names, ","),
 		"telegram", a.telegram.Enabled())
 

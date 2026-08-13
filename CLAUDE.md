@@ -57,5 +57,9 @@ reader can actually read:
   `docs/openapi.json`.
 - Response schemas are reflected off the Go structs, so documenting a new
   field means giving it a json tag, nothing more.
+- `internal/version.Version` is the only place a release number is written.
+  Never add a second one (the OpenAPI `info.version` reads it, and a test
+  enforces that). Releasing = bump the constant, commit, tag `vX.Y.Z`; CI
+  rejects a tag that disagrees and publishes the matching image tag.
 - Changing an existing source's URL format needs no purge rule here;
   deployments handle their own state. Exclusions are re-applied on boot.

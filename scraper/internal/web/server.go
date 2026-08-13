@@ -14,6 +14,7 @@ import (
 
 	"github.com/IceShack/job-scout/scraper/internal/model"
 	"github.com/IceShack/job-scout/scraper/internal/store"
+	"github.com/IceShack/job-scout/scraper/internal/version"
 )
 
 // Options configures the server.
@@ -259,6 +260,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	sources, fits := s.filterOptions()
 	data := map[string]any{
 		"Title":         s.title,
+		"Version":       version.Version,
 		"Jobs":          jobs,
 		"Sources":       sources,
 		"Fits":          fits,
@@ -319,7 +321,7 @@ a { color: inherit; }
 </style>
 </head>
 <body>
-<h1>{{.Title}} <span class="muted">{{.Total}} matches · last run {{reltime .LastRun}}</span></h1>
+<h1>{{.Title}} <span class="muted">v{{.Version}} · {{.Total}} matches · last run {{reltime .LastRun}}</span></h1>
 <form method="get">
 <input name="q" placeholder="search…" value="{{.Query.Get "q"}}">
 <select name="source">

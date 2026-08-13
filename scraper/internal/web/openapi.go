@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/IceShack/job-scout/scraper/internal/model"
+	"github.com/IceShack/job-scout/scraper/internal/version"
 )
 
 // The OpenAPI document is generated from the same route table that
 // registers the handlers, and its schemas are reflected off the structs
 // that are actually served — so the description cannot drift from the API.
-
-const apiVersion = "1.0.0"
 
 // route is one endpoint: the entry both registers the handler and
 // describes it.
@@ -201,8 +200,9 @@ func (s *Server) Spec() map[string]any {
 	spec := map[string]any{
 		"openapi": "3.1.0",
 		"info": map[string]any{
-			"title":       s.title + " API",
-			"version":     apiVersion,
+			"title": s.title + " API",
+			// The API is versioned with the release; there is one number.
+			"version":     version.Version,
 			"description": "Self-hosted job-search scraper: the matched jobs, their application status, and a manual scrape trigger.",
 			"license":     map[string]any{"name": "MIT", "identifier": "MIT"},
 		},

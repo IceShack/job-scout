@@ -12,6 +12,7 @@ import (
 
 	"github.com/IceShack/job-scout/scraper/internal/model"
 	"github.com/IceShack/job-scout/scraper/internal/store"
+	"github.com/IceShack/job-scout/scraper/internal/version"
 )
 
 func testServer(t *testing.T, password string) *Server {
@@ -161,8 +162,13 @@ func TestOpenAPIEndpoint(t *testing.T) {
 	if doc["openapi"] != "3.1.0" {
 		t.Errorf("openapi = %v", doc["openapi"])
 	}
-	if title := doc["info"].(map[string]any)["title"]; title != "test-scout API" {
-		t.Errorf("title = %v, want the app title", title)
+	info := doc["info"].(map[string]any)
+	if info["title"] != "test-scout API" {
+		t.Errorf("title = %v, want the app title", info["title"])
+	}
+	// One version number: the document must not carry its own.
+	if info["version"] != version.Version {
+		t.Errorf("info.version = %v, want %s", info["version"], version.Version)
 	}
 }
 
