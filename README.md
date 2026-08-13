@@ -26,6 +26,7 @@ make run           # http://localhost:8080
 | weworkremotely.com | category RSS feeds you list | — |
 | news.ycombinator.com | latest "Ask HN: Who is hiring?" via the Algolia API | — |
 | arc.dev | remote listings from the embedded Next.js JSON; its `requiredCountries` field filters eligibility exactly | — |
+| djinni.co | filtered listing pages (Ukrainian board, lots of EU-remote work); each card carries the whole ad, so one request covers 15 offers | — |
 | justjoin.it | listing pages (Polish/EU board, B2B-heavy); offer pages are re-read to check the ad's real language | — |
 | dev.bg | listing pages (Bulgarian board); ads link to the English mirror h512.com | — |
 | jobs.bg + tech.bg | searches on both skins of the same platform, deduped by ad id; ads link to the English pages | `FIRECRAWL_API_KEY` (Cloudflare) |

@@ -114,6 +114,13 @@ func All(d Deps) []Source {
 		}
 		return ArcDev{Pages: p}
 	})
+	add("djinni", func(c config.Source) Source {
+		p := pages("djinni", c)
+		if p == nil {
+			return nil
+		}
+		return Djinni{Pages: p}
+	})
 	add("jobsbg", func(c config.Source) Source {
 		p := pages("jobsbg", c)
 		if p == nil {
@@ -172,6 +179,10 @@ func get(ctx context.Context, url string) ([]byte, error) {
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) job-scout/1.0")
 	req.Header.Set("Accept", "*/*")
+	// Boards that localise by request headers must give us the English
+	// page: it is the version we store a link to, and the language filter
+	// judges ads on the text we actually fetched.
+	req.Header.Set("Accept-Language", "en")
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

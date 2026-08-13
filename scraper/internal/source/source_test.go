@@ -12,6 +12,7 @@ func fullConfig() *config.Config {
 		"devbg":    {Pages: []string{"https://dev.bg/company/jobs/go/"}},
 		"justjoin": {Pages: []string{"https://justjoin.it/job-offers/all-locations/go"}, VerifyLimit: 5},
 		"arcdev":   {Pages: []string{"https://arc.dev/remote-jobs/golang"}},
+		"djinni":   {Pages: []string{"https://djinni.co/jobs/?primary_keyword=Golang"}},
 		"jobsbg":   {Pages: []string{"https://www.jobs.bg/front_job_search.php"}},
 		"serper":   {Queries: []string{"golang remote europe"}, MaxPagesPerRun: 3},
 	}}

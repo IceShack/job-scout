@@ -154,6 +154,15 @@ sources:
       - https://arc.dev/remote-jobs/golang
       - https://arc.dev/remote-jobs/typescript
 
+  djinni:
+    enabled: true
+    # One page holds 15 offers, newest first; add "&page=2" for more.
+    # Note the board writes some regions as "EU" and "Worldwide", so keep
+    # matching markers for those in location.region_markers.
+    pages:
+      - https://djinni.co/jobs/?primary_keyword=Golang&employment=remote
+      - https://djinni.co/jobs/?primary_keyword=JavaScript&employment=remote
+
   justjoin:
     enabled: true
     pages:

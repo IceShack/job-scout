@@ -32,7 +32,7 @@ func (d *Duration) UnmarshalYAML(node *yaml.Node) error {
 // exactly these; anything else in the config file is a typo.
 var KnownSources = []string{
 	"remoteok", "remotive", "weworkremotely", "hackernews",
-	"devbg", "justjoin", "arcdev", "jobsbg", "serper",
+	"devbg", "justjoin", "arcdev", "djinni", "jobsbg", "serper",
 }
 
 type App struct {
